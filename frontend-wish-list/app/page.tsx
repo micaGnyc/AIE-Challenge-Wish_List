@@ -42,7 +42,41 @@ export default function SantaWishList() {
   ])
   const [currentMessage, setCurrentMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [finalVerdict, setFinalVerdict] = useState<string | null>(null)
+const [isSubmittingList, setIsSubmittingList] = useState(false)
 
+const themeColors = {
+  classic: {
+    primary: "bg-christmas-green",
+    primaryHover: "hover:bg-christmas-green/90",
+    secondary: "bg-christmas-red",
+    border: "border-amber-600",
+    accent: "text-christmas-green",
+  },
+  snow: {
+    primary: "bg-blue-500",
+    primaryHover: "hover:bg-blue-600",
+    secondary: "bg-slate-400",
+    border: "border-blue-300",
+    accent: "text-blue-600",
+  },
+  aurora: {
+    primary: "bg-purple-600",
+    primaryHover: "hover:bg-purple-700",
+    secondary: "bg-teal-500",
+    border: "border-purple-400",
+    accent: "text-purple-600",
+  },
+  gingerbread: {
+    primary: "bg-amber-700",
+    primaryHover: "hover:bg-amber-800",
+    secondary: "bg-orange-500",
+    border: "border-amber-800",
+    accent: "text-amber-700",
+  },
+}
+
+const currentTheme = themeColors[selectedTheme]
   const themes: Theme[] = [
     { id: "classic", name: "Classic", icon: <TreePine className="w-4 h-4" />, unlockAt: 0 },
     { id: "snow", name: "Snow", icon: <Snowflake className="w-4 h-4" />, unlockAt: 20 },
@@ -69,6 +103,38 @@ export default function SantaWishList() {
     setChristmasSpirit(newSpirit)
   }
 
+  const completeWishList = async () => {
+    if (wishes.length === 0 || isSubmittingList) return
+  
+    setIsSubmittingList(true)
+  
+    // Format wishes for Santa to review
+    const wishSummary = wishes
+      .map((w, i) => `${i + 1}. "${w.text}" (marked as ${w.verdict})`)
+      .join("\n")
+  
+    const message = `Please review my complete Christmas wish list and give me your final verdict:\n\n${wishSummary}\n\nAm I on the Nice List or Naughty List this year?`
+  
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message }),
+        },
+      )
+  
+      const data = await response.json()
+      setFinalVerdict(data.reply || "Santa couldn't decide... try again!")
+    } catch (error) {
+      setFinalVerdict("Ho ho ho! My magic connection seems to be having trouble. Try again in a moment! 🎅")
+    } finally {
+      setIsSubmittingList(false)
+    }
+  }
   const sendMessage = async () => {
     if (!currentMessage.trim() || isLoading) return
 
@@ -154,7 +220,7 @@ export default function SantaWishList() {
           <div className="p-8">
             {/* Title */}
             <div className="text-center mb-8">
-              <h1 className="text-5xl font-serif text-christmas-green mb-2 font-bold">Santa's Magical Wish List</h1>
+            <h1 className={`text-5xl font-serif ${currentTheme.accent} mb-2 font-bold`}>Santa's Magical Wish List</h1>
               <p className="text-lg text-[#6b4423] italic">Write your wishes upon the enchanted scroll</p>
             </div>
 
@@ -166,8 +232,7 @@ export default function SantaWishList() {
               </div>
               <div className="w-full h-8 bg-amber-200 rounded-full overflow-hidden border-2 border-amber-600 relative">
                 <div
-                  className="h-full bg-gradient-to-r from-christmas-green to-emerald-600 transition-all duration-500 relative"
-                  style={{ width: `${christmasSpirit}%` }}
+className={`h-full ${currentTheme.primary} transition-all duration-500 relative`}                  style={{ width: `${christmasSpirit}%` }}
                 >
                   <div className="absolute inset-0 flex items-center justify-center">
                     {christmasSpirit > 10 && (
@@ -258,9 +323,20 @@ export default function SantaWishList() {
                     </div>
                   ))}
                 </div>
-                <Button className="w-full mt-6 bg-amber-600 hover:bg-amber-700 text-white h-12 text-base font-semibold">
-                  Complete My List
-                </Button>
+                <Button 
+  onClick={completeWishList}
+  disabled={isSubmittingList || finalVerdict !== null}
+  className="w-full mt-6 bg-amber-600 hover:bg-amber-700 text-white h-12 text-base font-semibold disabled:opacity-50"
+>
+  {isSubmittingList ? "Santa is reviewing..." : finalVerdict ? "List Submitted! ✓" : "Complete My List"}
+</Button>
+
+{finalVerdict && (
+  <div className="mt-6 p-4 bg-white/90 rounded-xl border-2 border-christmas-green">
+    <h4 className="text-lg font-semibold text-christmas-green mb-2">🎅 Santa's Final Verdict:</h4>
+    <p className="text-[#6b4423] whitespace-pre-wrap">{finalVerdict}</p>
+  </div>
+)}
               </div>
             )}
           </div>
@@ -324,8 +400,7 @@ export default function SantaWishList() {
               <Button
                 onClick={sendMessage}
                 disabled={isLoading}
-                className="bg-christmas-green hover:bg-christmas-green/90 text-white h-12 px-6"
-              >
+                className={`${currentTheme.primary} ${currentTheme.primaryHover} text-white h-12 px-6`}              >
                 <Send className="w-5 h-5" />
               </Button>
             </div>

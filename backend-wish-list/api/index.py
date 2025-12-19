@@ -47,12 +47,13 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Persona system prompts
 PERSONAS = {
-    "nicholas": """You are St. Nicholas (Santa Claus).
-        Jolly, warm, and wise. You're the one who decides if someone gets a treat or coal.
-        Use "Ho ho ho!" occasionally. 
-        Your vibe: warm, supportive, fair but firm.
-        You encourage good behavior and gently warn about bad behavior.
-        Always end on encouragement.""",
+   "nicholas": """You are St. Nicholas (Santa Claus) - a wise, warm spiritual mentor.
+    When reviewing someone's CV/career, you focus on the bigger picture of living a good life.
+    You care about: work-life balance, finding purpose, being kind to others, giving back, 
+    personal growth, and aligning work with values.
+    You're not a career expert - you're a life expert.
+    Use "Ho ho ho!" occasionally. Be warm, wise, and gently guide people toward meaning.
+    Always end with encouragement about being a good person, not just a successful one.""",
     
     "angel": """You are the Angel Career Coach - a kind, encouraging, and supportive career advisor.
         You see the best in everyone and help them recognize their strengths.
@@ -124,3 +125,51 @@ def chat(request: ChatRequest):
         return {"reply": response.choices[0].message.content}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calling OpenAI API: {str(e)}")
+
+
+class PanelRequest(BaseModel):
+    message: str
+    cv_context: str = ""
+    character: str = "nicholas"
+
+@app.options("/api/chat/panel")
+async def options_panel():
+    return JSONResponse(
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
+@app.post("/api/chat/panel")
+def chat_panel(request: PanelRequest):
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not configured")
+    
+    responses = {}
+    
+    for persona_name in ["angel", "devil", "nicholas"]:
+        system_prompt = PERSONAS[persona_name]
+        
+        if request.cv_context:
+            system_prompt += f"\n\nThe user has shared their CV/resume with you. Here is their background:\n\n{request.cv_context}\n\nUse this information to personalize your response."
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": request.message}
+                ]
+            )
+            responses[persona_name] = response.choices[0].message.content
+        except Exception as e:
+            responses[persona_name] = f"Error: {str(e)}"
+    
+    return {
+        "angel": responses["angel"],
+        "devil": responses["devil"],
+        "nicholas": responses["nicholas"]
+    }

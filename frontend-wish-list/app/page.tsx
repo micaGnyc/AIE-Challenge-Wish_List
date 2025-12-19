@@ -44,6 +44,11 @@ export default function SantaWishList() {
   const [isLoading, setIsLoading] = useState(false)
   const [finalVerdict, setFinalVerdict] = useState<string | null>(null)
 const [isSubmittingList, setIsSubmittingList] = useState(false)
+const [cvText, setCvText] = useState<string>("")
+const [isUploadingCV, setIsUploadingCV] = useState(false)
+const [panelQuestion, setPanelQuestion] = useState("")
+const [panelResponses, setPanelResponses] = useState<{angel: string, devil: string, nicholas: string} | null>(null)
+const [isPanelLoading, setIsPanelLoading] = useState(false)
 
 const themeColors = {
   classic: {
@@ -108,7 +113,6 @@ const currentTheme = themeColors[selectedTheme]
   
     setIsSubmittingList(true)
   
-    // Format wishes for Santa to review
     const wishSummary = wishes
       .map((w, i) => `${i + 1}. "${w.text}" (marked as ${w.verdict})`)
       .join("\n")
@@ -135,6 +139,71 @@ const currentTheme = themeColors[selectedTheme]
       setIsSubmittingList(false)
     }
   }
+  
+  const uploadCV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !file.name.endsWith('.pdf')) {
+      alert('Please select a PDF file')
+      return
+    }
+  
+    setIsUploadingCV(true)
+    const formData = new FormData()
+    formData.append('file', file)
+  
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/upload-cv`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
+      const data = await response.json()
+      if (data.cv_text) {
+        setCvText(data.cv_text)
+      }
+    } catch (error) {
+      alert('Error uploading CV. Please try again.')
+    } finally {
+      setIsUploadingCV(false)
+    }
+  }
+  
+  const askPanel = async () => {
+    if (!panelQuestion.trim() || isPanelLoading) return
+  
+    setIsPanelLoading(true)
+    setPanelResponses(null)
+  
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/panel`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            message: panelQuestion,
+            cv_context: cvText
+          }),
+        },
+      )
+  
+      const data = await response.json()
+      setPanelResponses({
+        angel: data.angel,
+        devil: data.devil,
+        nicholas: data.nicholas
+      })
+    } catch (error) {
+      alert('Error getting responses. Please try again.')
+    } finally {
+      setIsPanelLoading(false)
+    }
+  }
+
   const sendMessage = async () => {
     if (!currentMessage.trim() || isLoading) return
 
@@ -341,72 +410,106 @@ className={`h-full ${currentTheme.primary} transition-all duration-500 relative`
             )}
           </div>
         </Card>
+{/* Santa's Gift - Career Coaching Panel */}
+{finalVerdict && (
+  <Card className="mt-8 bg-[#f5ebe0] border-8 border-amber-600 shadow-2xl rounded-3xl overflow-hidden">
+    <div className="p-6">
+      <h2 className="text-3xl font-serif text-christmas-green mb-2 font-bold text-center">🎁 Santa's Gift 🎁</h2>
+      <p className="text-center text-[#6b4423] mb-6 italic">Everyone deserves guidance! Upload your CV and get wisdom from all three advisors.</p>
+      
+      {/* CV Upload */}
+      <div className="mb-6 text-center">
+        <label className="cursor-pointer inline-block">
+          <div className={`px-6 py-3 rounded-xl border-2 border-dashed ${cvText ? 'border-green-400 bg-green-50' : 'border-amber-400 bg-white'} hover:border-amber-600 transition-all`}>
+            {isUploadingCV ? (
+              <span className="text-[#6b4423]">Uploading...</span>
+            ) : cvText ? (
+              <span className="text-green-700">✓ CV Uploaded! Click to replace</span>
+            ) : (
+              <span className="text-[#6b4423]">📄 Upload your CV (PDF) for personalized advice</span>
+            )}
+          </div>
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={uploadCV}
+            className="hidden"
+          />
+        </label>
+      </div>
 
-        {/* Santa Chat Window */}
-        <Card className="mt-8 bg-[#f5ebe0] border-8 border-amber-600 shadow-2xl rounded-3xl overflow-hidden">
-          <div className="p-6">
-            <h2 className="text-3xl font-serif text-christmas-green mb-4 font-bold text-center">Chat with Santa 🎅</h2>
+      {/* Question Input */}
+      {cvText && (
+        <div className="mb-6">
+          <div className="flex gap-2">
+            <Input
+              value={panelQuestion}
+              onChange={(e) => setPanelQuestion(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && askPanel()}
+              placeholder="Ask a question about your career or life..."
+              disabled={isPanelLoading}
+              className="flex-1 bg-white border-2 border-amber-400 text-[#6b4423] placeholder:text-amber-600/50 focus:border-amber-600 text-base h-12"
+            />
+            <Button
+              onClick={askPanel}
+              disabled={isPanelLoading || !panelQuestion.trim()}
+              className="bg-amber-600 hover:bg-amber-700 text-white h-12 px-6"
+            >
+              {isPanelLoading ? "Asking..." : <Send className="w-5 h-5" />}
+            </Button>
+          </div>
+        </div>
+      )}
 
-            <ScrollArea className="h-80 mb-4 bg-white/50 rounded-xl p-4 border-2 border-amber-300">
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[80%] p-3 rounded-2xl ${
-                        message.sender === "user"
-                          ? "bg-blue-500 text-white rounded-br-none"
-                          : "bg-christmas-red text-white rounded-bl-none"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed">{message.text}</p>
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-christmas-red text-white p-3 rounded-2xl rounded-bl-none">
-                      <div className="flex gap-2">
-                        <div
-                          className="w-2 h-2 bg-white rounded-full animate-bounce"
-                          style={{ animationDelay: "0ms" }}
-                        />
-                        <div
-                          className="w-2 h-2 bg-white rounded-full animate-bounce"
-                          style={{ animationDelay: "150ms" }}
-                        />
-                        <div
-                          className="w-2 h-2 bg-white rounded-full animate-bounce"
-                          style={{ animationDelay: "300ms" }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
+      {/* Panel Responses */}
+      {isPanelLoading && (
+        <div className="text-center py-8">
+          <div className="flex justify-center gap-2 mb-4">
+            <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+            <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          <p className="text-[#6b4423] italic">Your advisors are thinking...</p>
+        </div>
+      )}
+
+      {panelResponses && (
+        <div className="space-y-4">
+          {/* Angel & Devil Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Angel Response */}
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">😇</span>
+                <h3 className="font-bold text-blue-700">Angel Coach</h3>
               </div>
-            </ScrollArea>
+              <p className="text-blue-900 text-sm leading-relaxed whitespace-pre-wrap">{panelResponses.angel}</p>
+            </div>
 
-            <div className="flex gap-2">
-              <Input
-                value={currentMessage}
-                onChange={(e) => setCurrentMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Ask Santa anything..."
-                disabled={isLoading}
-                className="flex-1 bg-white border-2 border-amber-400 text-[#6b4423] placeholder:text-amber-600/50 focus:border-christmas-green text-base h-12"
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={isLoading}
-                className={`${currentTheme.primary} ${currentTheme.primaryHover} text-white h-12 px-6`}              >
-                <Send className="w-5 h-5" />
-              </Button>
+            {/* Devil Response */}
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">😈</span>
+                <h3 className="font-bold text-red-700">Devil Coach</h3>
+              </div>
+              <p className="text-red-900 text-sm leading-relaxed whitespace-pre-wrap">{panelResponses.devil}</p>
             </div>
           </div>
-        </Card>
-      </div>
+
+          {/* Santa Row */}
+          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">🎅</span>
+              <h3 className="font-bold text-green-700">Santa's Wisdom</h3>
+            </div>
+            <p className="text-green-900 text-sm leading-relaxed whitespace-pre-wrap">{panelResponses.nicholas}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  </Card>
+)}
+</div>
     </div>
   )
 }

@@ -114,10 +114,10 @@ const currentTheme = themeColors[selectedTheme]
     setIsSubmittingList(true)
   
     const wishSummary = wishes
-      .map((w, i) => `${i + 1}. "${w.text}" (marked as ${w.verdict})`)
-      .join("\n")
+  .map((w, i) => `${i + 1}. "${w.text}"`)
+  .join("\n")
   
-    const message = `Please review my complete Christmas wish list and give me your final verdict:\n\n${wishSummary}\n\nAm I on the Nice List or Naughty List this year?`
+  const message = `Please review my complete Christmas wish list and give me your final verdict:\n\n${wishSummary}\n\nAm I on the Nice List or Naughty List this year? Keep your response under 100 words. End by mentioning that everyone deserves a gift - if you've deemed them nice for the good they're wishing for, or if you've deemed them naughty,because you believe in their potential to be good. Tease that a special gift awaits below.`
   
     try {
       const response = await fetch(
@@ -290,7 +290,24 @@ const currentTheme = themeColors[selectedTheme]
             {/* Title */}
             <div className="text-center mb-8">
             <h1 className={`text-5xl font-serif ${currentTheme.accent} mb-2 font-bold`}>Santa's Magical Wish List</h1>
-              <p className="text-lg text-[#6b4423] italic">Write your wishes upon the enchanted scroll</p>
+            <p className="text-lg text-[#6b4423] italic">Write your wishes to get a naughty or nice verdict 
+            <br />
+              and build up the spirit meter to unlock Magical Color Themes</p>            </div>
+
+            {/* Wish Input */}
+            <div className="mb-8">
+              <div className="flex gap-2">
+                <Input
+                  value={currentWish}
+                  onChange={(e) => setCurrentWish(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addWish()}
+                  placeholder="Type your Christmas wish here..."
+                  className="flex-1 bg-white border-2 border-amber-400 text-[#6b4423] placeholder:text-amber-600/50 focus:border-christmas-green text-base h-12"
+                />
+                <Button onClick={addWish} className="bg-christmas-red hover:bg-christmas-red/90 text-white h-12 px-6">
+                  <Plus className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Christmas Spirit Meter */}
@@ -348,22 +365,6 @@ className={`h-full ${currentTheme.primary} transition-all duration-500 relative`
               </div>
             </div>
 
-            {/* Wish Input */}
-            <div className="mb-8">
-              <div className="flex gap-2">
-                <Input
-                  value={currentWish}
-                  onChange={(e) => setCurrentWish(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addWish()}
-                  placeholder="Type your Christmas wish here..."
-                  className="flex-1 bg-white border-2 border-amber-400 text-[#6b4423] placeholder:text-amber-600/50 focus:border-christmas-green text-base h-12"
-                />
-                <Button onClick={addWish} className="bg-christmas-red hover:bg-christmas-red/90 text-white h-12 px-6">
-                  <Plus className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-
             {/* Wish List */}
             {wishes.length > 0 && (
               <div className="mb-6">
@@ -402,7 +403,7 @@ className={`h-full ${currentTheme.primary} transition-all duration-500 relative`
 
 {finalVerdict && (
   <div className="mt-6 p-4 bg-white/90 rounded-xl border-2 border-christmas-green">
-    <h4 className="text-lg font-semibold text-christmas-green mb-2">🎅 Santa's Final Verdict:</h4>
+    <h4 className="text-lg font-semibold text-christmas-green mb-2">🎅 Santa's Thoughts:</h4>
     <p className="text-[#6b4423] whitespace-pre-wrap">{finalVerdict}</p>
   </div>
 )}

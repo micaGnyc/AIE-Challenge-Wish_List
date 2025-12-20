@@ -2,7 +2,7 @@
 
 A festive, AI-powered Christmas wish list application where users can create their holiday wishes, get verdicts from Santa, and receive personalized career coaching from a unique panel of advisors! Built with Next.js and FastAPI, featuring beautiful animations and an enchanting parchment-scroll design.
 
-🔗 **[Live Demo](https://frontend-wish-list-673ooocgl-micaela-8510s-projects.vercel.app/)**
+🔗 **[Live Demo](https://frontend-wish-list-7bjz1x2nn-micaela-8510s-projects.vercel.app/)**
 
 ![Santa's Wish List](frontend-wish-list/public/images/cool-santa.png)
 

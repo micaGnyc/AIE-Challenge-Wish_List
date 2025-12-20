@@ -416,7 +416,7 @@ className={`h-full ${currentTheme.primary} transition-all duration-500 relative`
   <Card className="mt-8 bg-[#f5ebe0] border-8 border-amber-600 shadow-2xl rounded-3xl overflow-hidden">
     <div className="p-6">
       <h2 className="text-3xl font-serif text-christmas-green mb-2 font-bold text-center">🎁 Santa's Gift 🎁</h2>
-      <p className="text-center text-[#6b4423] mb-6 italic">Everyone deserves guidance! Upload your CV and get wisdom from all three advisors.</p>
+      <p className="text-center text-[#6b4423] mb-6 italic">Everyone deserves guidance! Upload your CV and get wisdom from Santa and two career coaches.</p>
       
       {/* CV Upload */}
       <div className="mb-6 text-center">

@@ -1,6 +1,8 @@
 # 🎅 Santa's Magical Wish List
 
-A festive, AI-powered Christmas wish list application where users can create their holiday wishes and chat with Santa Claus! Built with Next.js and FastAPI, featuring beautiful animations and an enchanting parchment-scroll design.
+A festive, AI-powered Christmas wish list application where users can create their holiday wishes, get verdicts from Santa, and receive personalized career coaching from a unique panel of advisors! Built with Next.js and FastAPI, featuring beautiful animations and an enchanting parchment-scroll design.
+
+🔗 **[Live Demo](https://frontend-wish-list-673ooocgl-micaela-8510s-projects.vercel.app/)**
 
 ![Santa's Wish List](frontend-wish-list/public/images/cool-santa.png)
 
@@ -10,10 +12,12 @@ A festive, AI-powered Christmas wish list application where users can create the
 - Add Christmas wishes to your personalized list
 - Each wish receives Santa's verdict: **NICE** or **NAUGHTY**
 - Submit your complete list for Santa's final review
+- Get a personalized response from Santa based on all your wishes
 
 ### 🎄 Christmas Spirit Meter
 - Watch your Christmas spirit grow as you add wishes
 - Fill the meter to 100% by adding 10 wishes
+- Unlock magical themes as you build Christmas spirit!
 
 ### 🎨 Unlockable Themes
 - **Classic** (0%) - Traditional Christmas green
@@ -21,15 +25,19 @@ A festive, AI-powered Christmas wish list application where users can create the
 - **Aurora** (60%) - Magical purple northern lights
 - **Gingerbread** (100%) - Warm amber cookie theme
 
-### 💬 Chat with Santa
-- Real-time AI-powered conversations with Santa Claus
-- Powered by GPT-4o-mini with a jolly Santa persona
-- Ask Santa anything about Christmas!
+### 🎁 Santa's Gift: Career Coaching Panel
+After completing your wish list, unlock a special gift from Santa!
+- **Upload your CV** (PDF format) for personalized career advice
+- Get wisdom from **three unique AI advisors**:
+  - 😇 **Angel Coach** - Kind, encouraging, sees the best in you
+  - 😈 **Devil Coach** - Brutally honest, gives tough love
+  - 🎅 **Santa's Wisdom** - Focuses on work-life balance and finding purpose
 
 ### 🌨️ Visual Effects
 - Animated falling snowflakes
 - Elegant parchment scroll design
 - Festive color schemes and smooth transitions
+- Dynamic theme colors that change the entire UI
 
 ## 🛠️ Tech Stack
 
@@ -42,7 +50,8 @@ A festive, AI-powered Christmas wish list application where users can create the
 
 ### Backend
 - **FastAPI** - Python web framework
-- **OpenAI API** - GPT-4o-mini for AI chat
+- **OpenAI API** - GPT-4o-mini for AI chat and career coaching
+- **PyPDF2** - PDF text extraction for CV uploads
 - **Pydantic** - Data validation
 
 ### Deployment
@@ -143,16 +152,50 @@ Health check endpoint.
 ```
 
 ### `POST /api/chat`
-Send a message to Santa.
+Send a message to Santa or get wish list verdict.
 
 **Request:**
 ```json
-{ "message": "What's on your wish list, Santa?" }
+{
+  "message": "What's on your wish list, Santa?",
+  "character": "nicholas",
+  "cv_context": ""
+}
 ```
 
 **Response:**
 ```json
 { "reply": "Ho ho ho! I wish for peace and joy for all children around the world! 🎅" }
+```
+
+### `POST /api/upload-cv`
+Upload a PDF resume/CV for text extraction.
+
+**Request:** `multipart/form-data` with PDF file
+
+**Response:**
+```json
+{ "cv_text": "Extracted text from the PDF..." }
+```
+
+### `POST /api/chat/panel`
+Get responses from all three career coaching personas at once.
+
+**Request:**
+```json
+{
+  "message": "What should I focus on in my career?",
+  "cv_context": "Extracted CV text here..."
+}
+```
+
+**Response:**
+```json
+{
+  "angel": "✨ I can see so many wonderful strengths in your background...",
+  "devil": "🔥 Let's cut to the chase - here's what you need to work on...",
+  "nicholas": "Ho ho ho! Remember, a fulfilling career is about more than just success..."
+}
 ```
 
 ## 🎨 Customization
@@ -165,8 +208,11 @@ Themes are defined in the `themeColors` object in `page.tsx`. Each theme include
 - `border` - Border color
 - `accent` - Text accent color
 
-### Modifying Santa's Personality
-Edit the system prompt in `backend-wish-list/api/index.py` to customize how Santa responds.
+### Modifying Personas
+Edit the `PERSONAS` dictionary in `backend-wish-list/api/index.py` to customize how each advisor responds:
+- **nicholas** - Santa's wise, warm guidance
+- **angel** - Encouraging, supportive feedback
+- **devil** - Direct, tough-love approach
 
 ## 🚢 Deployment
 
@@ -187,4 +233,3 @@ This project is open source and available under the MIT License.
 ## 🎄 Happy Holidays!
 
 May your wishes come true this Christmas season! 🎅✨
-
